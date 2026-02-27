@@ -1,0 +1,38 @@
+name: Flutter Android CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Lấy mã nguồn (Checkout code)
+        uses: actions/checkout@v4
+
+      - name: ☕ Cài đặt Java 17 (Bắt buộc để build Android)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: 🐦 Cài đặt Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: 📦 Tải các thư viện (Pub get)
+        run: flutter pub get
+
+      - name: 🔍 Kiểm tra lỗi Code (Analyze)
+        run: flutter analyze
+
+      - name: 🧪 Chạy Unit Test
+        run: flutter test
+
+      - name: 🛠️ Build thử Android APK (Debug mode cho nhanh)
+        run: flutter build apk --debug
