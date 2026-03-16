@@ -12,7 +12,20 @@
           "package_name": "com.example.smart_expense_ai_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "899763385126-qcrhv1rv4lo2c2elk8kvq8eh9h5eo0uc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.smart_expense_ai_app",
+            "certificate_hash": "5e3bdcbedfaef3800f3c852c45b21f707cc0d11e"
+          }
+        },
+        {
+          "client_id": "899763385126-astocubt98mqv6thi3sde638u419f1kj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAJRq4u2Cn1dJGt4B4tXqB0JNoZA-FGSNE"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "899763385126-astocubt98mqv6thi3sde638u419f1kj.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "899763385126-cngliiqbbb6dgcla92au3a0r9fpuagc1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.smartExpenseAiApp"
+              }
+            }
+          ]
         }
       }
     }
