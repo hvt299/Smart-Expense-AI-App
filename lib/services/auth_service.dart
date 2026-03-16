@@ -38,6 +38,8 @@ class AuthService {
           'uid': user.uid,
           'email': email,
           'fullName': fullName,
+          'avatarUrl':
+              'https://ui-avatars.com/api/?name=${Uri.encodeComponent(fullName)}&background=random',
           'createdAt': FieldValue.serverTimestamp(),
         });
       }
@@ -80,8 +82,23 @@ class AuthService {
             'uid': user.uid,
             'email': user.email,
             'fullName': user.displayName ?? 'Người dùng Google',
+            'avatarUrl':
+                user.photoURL ??
+                'https://ui-avatars.com/api/?name=${Uri.encodeComponent(user.displayName ?? "G")}&background=random',
             'createdAt': FieldValue.serverTimestamp(),
           });
+        } else {
+          final data = userDoc.data() as Map<String, dynamic>;
+          final currentAvatar = data['avatarUrl'] as String?;
+
+          if (currentAvatar != null &&
+              currentAvatar.contains('ui-avatars.com') &&
+              user.photoURL != null) {
+            await _firestore.collection('users').doc(user.uid).update({
+              'avatarUrl': user.photoURL,
+              'fullName': user.displayName ?? data['fullName'],
+            });
+          }
         }
       }
     } on FirebaseAuthException catch (e) {

@@ -46,8 +46,17 @@ class MyApp extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(color: Color(0xFF00B4D8), width: 2),
           ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.red.shade400, width: 2),
+          ),
+          errorStyle: const TextStyle(fontWeight: FontWeight.w500),
           contentPadding: const EdgeInsets.symmetric(
-            vertical: 18,
+            vertical: 16,
             horizontal: 20,
           ),
         ),
@@ -55,7 +64,7 @@ class MyApp extends StatelessWidget {
         // 3. Chuẩn hóa toàn bộ Nút bấm chính (To, êm, bo góc 16)
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
