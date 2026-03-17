@@ -1,8 +1,10 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/summary_card.dart';
 import '../widgets/ai_chat_input.dart';
+import '../widgets/budget_alert_bar.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -28,10 +30,18 @@ class HomeScreen extends ConsumerWidget {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
+        extendBodyBehindAppBar: true,
         backgroundColor: Colors.grey.shade50,
         appBar: AppBar(
-          backgroundColor: Colors.grey.shade50,
+          backgroundColor: Colors.white.withValues(alpha: 0.75),
           elevation: 0,
+          scrolledUnderElevation: 0,
+          flexibleSpace: ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+              child: Container(color: Colors.transparent),
+            ),
+          ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -72,6 +82,8 @@ class HomeScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SummaryCard(),
+                      const SizedBox(height: 16),
+                      const BudgetAlertBar(),
                       const SizedBox(height: 24),
                       const Text(
                         'Giao dịch gần đây',
