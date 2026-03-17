@@ -133,18 +133,22 @@ class AuthService {
 
   String _handleAuthError(String errorCode) {
     switch (errorCode) {
+      case 'invalid-credential':
       case 'user-not-found':
-        return 'Tài khoản không tồn tại.';
       case 'wrong-password':
-        return 'Mật khẩu không chính xác.';
+        return 'Email hoặc mật khẩu không chính xác.';
       case 'email-already-in-use':
-        return 'Email này đã được sử dụng.';
+        return 'Email này đã được sử dụng. Vui lòng đăng nhập.';
       case 'invalid-email':
         return 'Email không hợp lệ.';
       case 'weak-password':
-        return 'Mật khẩu quá yếu (cần ít nhất 6 ký tự).';
+        return 'Mật khẩu quá yếu (cần ít nhất 8 ký tự).';
+      case 'too-many-requests':
+        return 'Tài khoản tạm khóa do nhập sai nhiều lần. Hãy thử lại sau.';
+      case 'network-request-failed':
+        return 'Lỗi kết nối mạng. Vui lòng kiểm tra internet.';
       default:
-        return 'Đã xảy ra lỗi. Vui lòng thử lại sau.';
+        return 'Đã xảy ra lỗi ($errorCode). Vui lòng thử lại sau.';
     }
   }
 }
