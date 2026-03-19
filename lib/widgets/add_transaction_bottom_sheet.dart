@@ -1,8 +1,20 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AddTransactionBottomSheet extends StatefulWidget {
-  const AddTransactionBottomSheet({super.key});
+  final double? initialAmount;
+  final String? initialCategory;
+  final String? initialNote;
+
+  const AddTransactionBottomSheet({
+    super.key,
+    this.initialAmount,
+    this.initialCategory,
+    this.initialNote,
+  });
 
   @override
   State<AddTransactionBottomSheet> createState() =>
@@ -22,6 +34,25 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   ];
   String _selectedCategory = 'Ăn uống';
   DateTime _selectedDate = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialAmount != null && widget.initialAmount! > 0) {
+      _amountController.text = NumberFormat(
+        '#,##0',
+      ).format(widget.initialAmount!.toInt()).replaceAll(',', '.');
+    }
+    if (widget.initialNote != null) {
+      _noteController.text = widget.initialNote!;
+    }
+    if (widget.initialCategory != null) {
+      if (!_categories.contains(widget.initialCategory!)) {
+        _categories.add(widget.initialCategory!);
+      }
+      _selectedCategory = widget.initialCategory!;
+    }
+  }
 
   @override
   void dispose() {
@@ -89,18 +120,59 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     }
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final amountText = _amountController.text.trim();
     if (amountText.isEmpty) return;
 
     final amount =
         double.tryParse(amountText.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    if (amount <= 0) return;
 
-    debugPrint(
-      'Lưu thủ công: $amount, $_selectedCategory, ${_noteController.text}, $_selectedDate',
-    );
+    debugPrint('Đang lưu lên Firebase...');
 
-    Navigator.pop(context);
+    try {
+      await FirebaseFirestore.instance.collection('transactions').add({
+        'amount': amount,
+        'category': _selectedCategory,
+        'note': _noteController.text.trim(),
+        'date': Timestamp.fromDate(_selectedDate),
+        'createdAt': FieldValue.serverTimestamp(),
+        'uid': FirebaseAuth.instance.currentUser?.uid,
+      });
+
+      if (!mounted) return;
+
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle_outline, color: Colors.white),
+              SizedBox(width: 8),
+              Text(
+                'Đã lưu giao dịch thành công!',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Lỗi lưu Firebase: $e');
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi khi lưu: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -145,6 +217,10 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               TextField(
                 controller: _amountController,
                 keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  CurrencyInputFormatter(),
+                ],
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -301,6 +377,27 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class CurrencyInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) return newValue;
+
+    String numericOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (numericOnly.isEmpty) return newValue.copyWith(text: '');
+
+    final number = int.parse(numericOnly);
+    final formatted = NumberFormat('#,##0').format(number).replaceAll(',', '.');
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

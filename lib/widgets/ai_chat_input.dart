@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/ai_service.dart';
 import 'add_transaction_bottom_sheet.dart';
 
 class AiChatInput extends StatefulWidget {
@@ -10,6 +11,7 @@ class AiChatInput extends StatefulWidget {
 
 class _AiChatInputState extends State<AiChatInput> {
   final _chatController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -17,15 +19,40 @@ class _AiChatInputState extends State<AiChatInput> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final text = _chatController.text.trim();
     if (text.isEmpty) return;
 
-    // TODO: Gửi Text lên Backend AI
-    debugPrint("Gửi lệnh: $text");
-
-    _chatController.clear();
     FocusScope.of(context).unfocus();
+    setState(() => _isLoading = true);
+
+    final result = await AiService.analyzeExpense(text);
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    _chatController.clear();
+
+    if (result != null) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => AddTransactionBottomSheet(
+          initialAmount: result['amount'],
+          initialCategory: result['category'],
+          initialNote: result['note'],
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Không thể kết nối đến AI. Vui lòng kiểm tra lại Server!',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -71,8 +98,11 @@ class _AiChatInputState extends State<AiChatInput> {
               child: TextField(
                 controller: _chatController,
                 textInputAction: TextInputAction.send,
+                enabled: !_isLoading,
                 decoration: InputDecoration(
-                  hintText: 'VD: Ăn sáng 45k...',
+                  hintText: _isLoading
+                      ? 'AI đang phân tích...'
+                      : 'VD: Đổ xăng 50k...',
                   hintStyle: TextStyle(
                     color: Colors.grey.shade400,
                     fontSize: 14,
@@ -105,16 +135,27 @@ class _AiChatInputState extends State<AiChatInput> {
             const SizedBox(width: 8),
             Container(
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
+                color: _isLoading
+                    ? Colors.grey.shade300
+                    : theme.colorScheme.primary,
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: const Icon(
-                  Icons.send_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                onPressed: _submit,
+                icon: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.send_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                onPressed: _isLoading ? null : _submit,
               ),
             ),
           ],
