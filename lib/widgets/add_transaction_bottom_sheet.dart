@@ -1,8 +1,25 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AddTransactionBottomSheet extends StatefulWidget {
-  const AddTransactionBottomSheet({super.key});
+  final String? transactionId;
+  final String? initialType;
+
+  final double? initialAmount;
+  final String? initialCategory;
+  final String? initialNote;
+
+  const AddTransactionBottomSheet({
+    super.key,
+    this.transactionId,
+    this.initialType,
+    this.initialAmount,
+    this.initialCategory,
+    this.initialNote,
+  });
 
   @override
   State<AddTransactionBottomSheet> createState() =>
@@ -13,15 +30,51 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
 
-  final List<String> _categories = [
+  late String _transactionType;
+  final List<String> _expenseCategories = [
     'Ăn uống',
     'Di chuyển',
     'Mua sắm',
     'Hóa đơn',
     'Khác',
   ];
-  String _selectedCategory = 'Ăn uống';
+  final List<String> _incomeCategories = [
+    'Lương',
+    'Thưởng',
+    'Freelance',
+    'Kinh doanh',
+    'Khác',
+  ];
+  late String _selectedCategory;
+
   DateTime _selectedDate = DateTime.now();
+  TimeOfDay _selectedTime = TimeOfDay.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _transactionType = widget.initialType ?? 'expense';
+
+    final currentCategories = _transactionType == 'expense'
+        ? _expenseCategories
+        : _incomeCategories;
+    _selectedCategory = currentCategories.first;
+
+    if (widget.initialAmount != null && widget.initialAmount! > 0) {
+      _amountController.text = NumberFormat(
+        '#,##0',
+      ).format(widget.initialAmount!.toInt()).replaceAll(',', '.');
+    }
+    if (widget.initialNote != null) {
+      _noteController.text = widget.initialNote!;
+    }
+    if (widget.initialCategory != null) {
+      if (!currentCategories.contains(widget.initialCategory!)) {
+        currentCategories.add(widget.initialCategory!);
+      }
+      _selectedCategory = widget.initialCategory!;
+    }
+  }
 
   @override
   void dispose() {
@@ -49,9 +102,31 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
           FilledButton(
             onPressed: () {
               final newCat = textController.text.trim();
-              if (newCat.isNotEmpty && !_categories.contains(newCat)) {
+              if (newCat.isEmpty) return;
+
+              final currentCategories = _transactionType == 'expense'
+                  ? _expenseCategories
+                  : _incomeCategories;
+              final oppositeCategories = _transactionType == 'expense'
+                  ? _incomeCategories
+                  : _expenseCategories;
+
+              if (oppositeCategories.contains(newCat)) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Danh mục "$newCat" đã được dùng cho phần ${_transactionType == 'expense' ? 'Thu nhập' : 'Chi tiêu'}!',
+                    ),
+                    backgroundColor: Colors.orange.shade800,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+                return;
+              }
+
+              if (!currentCategories.contains(newCat)) {
                 setState(() {
-                  _categories.add(newCat);
+                  currentCategories.add(newCat);
                   _selectedCategory = newCat;
                 });
               }
@@ -70,42 +145,120 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Theme.of(context).colorScheme.primary,
-            ),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: Theme.of(context).colorScheme.primary,
           ),
-          child: child!,
-        );
-      },
+        ),
+        child: child!,
+      ),
     );
-
     if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
+      setState(() => _selectedDate = picked);
     }
   }
 
-  void _submit() {
+  Future<void> _pickTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null && picked != _selectedTime) {
+      setState(() => _selectedTime = picked);
+    }
+  }
+
+  Future<void> _submit() async {
     final amountText = _amountController.text.trim();
     if (amountText.isEmpty) return;
 
     final amount =
         double.tryParse(amountText.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    if (amount <= 0) return;
 
-    debugPrint(
-      'Lưu thủ công: $amount, $_selectedCategory, ${_noteController.text}, $_selectedDate',
+    final finalDateTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
     );
 
-    Navigator.pop(context);
+    final payload = {
+      'amount': amount,
+      'category': _selectedCategory,
+      'note': _noteController.text.trim(),
+      'dateTime': Timestamp.fromDate(finalDateTime),
+      'type': _transactionType,
+      'uid': FirebaseAuth.instance.currentUser?.uid,
+    };
+
+    try {
+      if (widget.transactionId != null) {
+        await FirebaseFirestore.instance
+            .collection('transactions')
+            .doc(widget.transactionId)
+            .update(payload);
+      } else {
+        payload['createdAt'] = FieldValue.serverTimestamp();
+        await FirebaseFirestore.instance
+            .collection('transactions')
+            .add(payload);
+      }
+
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_outline, color: Colors.white),
+              const SizedBox(width: 8),
+              Text(
+                widget.transactionId != null
+                    ? 'Đã cập nhật giao dịch!'
+                    : 'Đã lưu giao dịch thành công!',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Lỗi lưu Firebase: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi khi lưu: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final currentCategories = _transactionType == 'expense'
+        ? _expenseCategories
+        : _incomeCategories;
+    if (!currentCategories.contains(_selectedCategory)) {
+      _selectedCategory = currentCategories.first;
+    }
 
     return AnimatedPadding(
       padding: EdgeInsets.only(
@@ -135,20 +288,119 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Thêm giao dịch',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                widget.transactionId != null
+                    ? 'Sửa giao dịch'
+                    : 'Thêm giao dịch',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.all(4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () =>
+                            setState(() => _transactionType = 'expense'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: _transactionType == 'expense'
+                                ? Colors.white
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: _transactionType == 'expense'
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Chi tiêu',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: _transactionType == 'expense'
+                                    ? Colors.red.shade500
+                                    : Colors.grey.shade500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () =>
+                            setState(() => _transactionType = 'income'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: _transactionType == 'income'
+                                ? Colors.white
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: _transactionType == 'income'
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Thu nhập',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: _transactionType == 'income'
+                                    ? Colors.green.shade600
+                                    : Colors.grey.shade500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
 
               TextField(
                 controller: _amountController,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  CurrencyInputFormatter(),
+                  LengthLimitingTextInputFormatter(15),
+                ],
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF00B4D8),
+                  color: _transactionType == 'expense'
+                      ? const Color(0xFF00B4D8)
+                      : Colors.green.shade600,
                 ),
                 decoration: InputDecoration(
                   labelText: 'Số tiền',
@@ -179,7 +431,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  ..._categories.map((category) {
+                  ...currentCategories.map((category) {
                     final isSelected = _selectedCategory == category;
                     return ChoiceChip(
                       label: Text(category),
@@ -250,35 +502,74 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               ),
               const SizedBox(height: 20),
 
-              InkWell(
-                onTap: _pickDate,
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today_rounded,
-                        size: 20,
-                        color: Colors.grey.shade600,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Ngày: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}',
-                        style: TextStyle(
-                          color: Colors.grey.shade700,
-                          fontWeight: FontWeight.w500,
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: _pickDate,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              size: 20,
+                              color: Colors.grey.shade600,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              DateFormat('dd/MM/yyyy').format(_selectedDate),
+                              style: TextStyle(
+                                color: Colors.grey.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const Spacer(),
+                            Icon(
+                              Icons.edit_calendar_rounded,
+                              size: 18,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ],
                         ),
                       ),
-                      const Spacer(),
-                      Icon(
-                        Icons.edit_calendar_rounded,
-                        size: 18,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: InkWell(
+                      onTap: _pickTime,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.access_time_rounded,
+                              size: 20,
+                              color: Colors.grey.shade600,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}:00',
+                              style: TextStyle(
+                                color: Colors.grey.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const Spacer(),
+                            Icon(
+                              Icons.edit_rounded,
+                              size: 18,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 32),
 
@@ -286,9 +577,11 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 height: 52,
                 child: FilledButton(
                   onPressed: _submit,
-                  child: const Text(
-                    'LƯU GIAO DỊCH',
-                    style: TextStyle(
+                  child: Text(
+                    widget.transactionId != null
+                        ? 'CẬP NHẬT GIAO DỊCH'
+                        : 'LƯU GIAO DỊCH',
+                    style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1,
@@ -301,6 +594,24 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class CurrencyInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) return newValue;
+    String numericOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (numericOnly.isEmpty) return newValue.copyWith(text: '');
+    final number = int.parse(numericOnly);
+    final formatted = NumberFormat('#,##0').format(number).replaceAll(',', '.');
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }
