@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -391,9 +392,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.white.withValues(alpha: 0.75),
         elevation: 0,
         scrolledUnderElevation: 0,
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+            child: Container(color: Colors.transparent),
+          ),
+        ),
         title: const Text(
           'Lịch sử giao dịch',
           style: TextStyle(
