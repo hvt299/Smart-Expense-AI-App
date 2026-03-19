@@ -5,12 +5,17 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AddTransactionBottomSheet extends StatefulWidget {
+  final String? transactionId;
+  final String? initialType;
+
   final double? initialAmount;
   final String? initialCategory;
   final String? initialNote;
 
   const AddTransactionBottomSheet({
     super.key,
+    this.transactionId,
+    this.initialType,
     this.initialAmount,
     this.initialCategory,
     this.initialNote,
@@ -25,8 +30,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
 
-  String _transactionType = 'expense';
-
+  late String _transactionType;
   final List<String> _expenseCategories = [
     'Ăn uống',
     'Di chuyển',
@@ -34,7 +38,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     'Hóa đơn',
     'Khác',
   ];
-
   final List<String> _incomeCategories = [
     'Lương',
     'Thưởng',
@@ -42,7 +45,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     'Kinh doanh',
     'Khác',
   ];
-
   late String _selectedCategory;
 
   DateTime _selectedDate = DateTime.now();
@@ -51,7 +53,12 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   @override
   void initState() {
     super.initState();
-    _selectedCategory = _expenseCategories.first;
+    _transactionType = widget.initialType ?? 'expense';
+
+    final currentCategories = _transactionType == 'expense'
+        ? _expenseCategories
+        : _incomeCategories;
+    _selectedCategory = currentCategories.first;
 
     if (widget.initialAmount != null && widget.initialAmount! > 0) {
       _amountController.text = NumberFormat(
@@ -62,8 +69,8 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       _noteController.text = widget.initialNote!;
     }
     if (widget.initialCategory != null) {
-      if (!_expenseCategories.contains(widget.initialCategory!)) {
-        _expenseCategories.add(widget.initialCategory!);
+      if (!currentCategories.contains(widget.initialCategory!)) {
+        currentCategories.add(widget.initialCategory!);
       }
       _selectedCategory = widget.initialCategory!;
     }
@@ -138,22 +145,17 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Theme.of(context).colorScheme.primary,
-            ),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: Theme.of(context).colorScheme.primary,
           ),
-          child: child!,
-        );
-      },
+        ),
+        child: child!,
+      ),
     );
-
     if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
+      setState(() => _selectedDate = picked);
     }
   }
 
@@ -161,22 +163,17 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: _selectedTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Theme.of(context).colorScheme.primary,
-            ),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: Theme.of(context).colorScheme.primary,
           ),
-          child: child!,
-        );
-      },
+        ),
+        child: child!,
+      ),
     );
-
     if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-      });
+      setState(() => _selectedTime = picked);
     }
   }
 
@@ -196,44 +193,53 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       _selectedTime.minute,
     );
 
-    debugPrint('Đang lưu lên Firebase...');
+    final payload = {
+      'amount': amount,
+      'category': _selectedCategory,
+      'note': _noteController.text.trim(),
+      'dateTime': Timestamp.fromDate(finalDateTime),
+      'type': _transactionType,
+      'uid': FirebaseAuth.instance.currentUser?.uid,
+    };
 
     try {
-      await FirebaseFirestore.instance.collection('transactions').add({
-        'amount': amount,
-        'category': _selectedCategory,
-        'note': _noteController.text.trim(),
-        'dateTime': Timestamp.fromDate(finalDateTime),
-        'type': _transactionType,
-        'createdAt': FieldValue.serverTimestamp(),
-        'uid': FirebaseAuth.instance.currentUser?.uid,
-      });
+      if (widget.transactionId != null) {
+        await FirebaseFirestore.instance
+            .collection('transactions')
+            .doc(widget.transactionId)
+            .update(payload);
+      } else {
+        payload['createdAt'] = FieldValue.serverTimestamp();
+        await FirebaseFirestore.instance
+            .collection('transactions')
+            .add(payload);
+      }
 
       if (!mounted) return;
-
       Navigator.pop(context);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Row(
             children: [
-              Icon(Icons.check_circle_outline, color: Colors.white),
-              SizedBox(width: 8),
+              const Icon(Icons.check_circle_outline, color: Colors.white),
+              const SizedBox(width: 8),
               Text(
-                'Đã lưu giao dịch thành công!',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                widget.transactionId != null
+                    ? 'Đã cập nhật giao dịch!'
+                    : 'Đã lưu giao dịch thành công!',
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
           ),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
     } catch (e) {
       debugPrint('Lỗi lưu Firebase: $e');
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Lỗi khi lưu: $e'),
@@ -247,11 +253,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     final currentCategories = _transactionType == 'expense'
         ? _expenseCategories
         : _incomeCategories;
-
     if (!currentCategories.contains(_selectedCategory)) {
       _selectedCategory = currentCategories.first;
     }
@@ -284,9 +288,14 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Thêm giao dịch',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                widget.transactionId != null
+                    ? 'Sửa giao dịch'
+                    : 'Thêm giao dịch',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -542,7 +551,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              _selectedTime.format(context),
+                              '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}:00',
                               style: TextStyle(
                                 color: Colors.grey.shade700,
                                 fontWeight: FontWeight.w500,
@@ -550,7 +559,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                             ),
                             const Spacer(),
                             Icon(
-                              Icons.timer,
+                              Icons.edit_rounded,
                               size: 18,
                               color: theme.colorScheme.primary,
                             ),
@@ -567,9 +576,11 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 height: 52,
                 child: FilledButton(
                   onPressed: _submit,
-                  child: const Text(
-                    'LƯU GIAO DỊCH',
-                    style: TextStyle(
+                  child: Text(
+                    widget.transactionId != null
+                        ? 'CẬP NHẬT GIAO DỊCH'
+                        : 'LƯU GIAO DỊCH',
+                    style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1,
@@ -593,13 +604,10 @@ class CurrencyInputFormatter extends TextInputFormatter {
     TextEditingValue newValue,
   ) {
     if (newValue.text.isEmpty) return newValue;
-
     String numericOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
     if (numericOnly.isEmpty) return newValue.copyWith(text: '');
-
     final number = int.parse(numericOnly);
     final formatted = NumberFormat('#,##0').format(number).replaceAll(',', '.');
-
     return TextEditingValue(
       text: formatted,
       selection: TextSelection.collapsed(offset: formatted.length),

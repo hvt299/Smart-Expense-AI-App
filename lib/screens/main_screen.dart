@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import 'home_screen.dart';
+import 'transactions_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -15,7 +16,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const Center(child: Text('Lịch sử giao dịch (Sắp ra mắt)')),
+    const TransactionsScreen(),
     const Center(child: Text('Thống kê chi tiết (Sắp ra mắt)')),
     const _ProfileScreen(),
   ];

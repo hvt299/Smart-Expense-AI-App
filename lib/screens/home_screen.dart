@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/summary_card.dart';
 import '../widgets/ai_chat_input.dart';
@@ -26,6 +27,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     _transactionsStream = FirebaseFirestore.instance
         .collection('transactions')
+        .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
         .where(
           'dateTime',
           isGreaterThanOrEqualTo: Timestamp.fromDate(firstDayOfMonth),
