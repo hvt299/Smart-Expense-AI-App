@@ -17,6 +17,34 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   bool _showExpense = true;
 
+  late Stream<QuerySnapshot> _transactionsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateStream();
+  }
+
+  void _updateStream() {
+    final firstDay = DateTime(_selectedMonth.year, _selectedMonth.month, 1);
+    final lastDay = DateTime(
+      _selectedMonth.year,
+      _selectedMonth.month + 1,
+      0,
+      23,
+      59,
+      59,
+    );
+
+    _transactionsStream = FirebaseFirestore.instance
+        .collection('transactions')
+        .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+        .where('dateTime', isGreaterThanOrEqualTo: Timestamp.fromDate(firstDay))
+        .where('dateTime', isLessThanOrEqualTo: Timestamp.fromDate(lastDay))
+        .orderBy('dateTime', descending: true)
+        .snapshots();
+  }
+
   void _changeMonth(int offset) {
     setState(() {
       _selectedMonth = DateTime(
@@ -24,6 +52,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         _selectedMonth.month + offset,
         1,
       );
+      _updateStream();
     });
   }
 
@@ -53,15 +82,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   @override
   Widget build(BuildContext context) {
     Theme.of(context);
-    final firstDay = DateTime(_selectedMonth.year, _selectedMonth.month, 1);
-    final lastDay = DateTime(
-      _selectedMonth.year,
-      _selectedMonth.month + 1,
-      0,
-      23,
-      59,
-      59,
-    );
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -85,7 +105,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           ),
         ),
         centerTitle: true,
-
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: Padding(
@@ -122,16 +141,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       ),
 
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('transactions')
-            .where('uid', isEqualTo: FirebaseAuth.instance.currentUser?.uid)
-            .where(
-              'dateTime',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(firstDay),
-            )
-            .where('dateTime', isLessThanOrEqualTo: Timestamp.fromDate(lastDay))
-            .orderBy('dateTime', descending: true)
-            .snapshots(),
+        stream: _transactionsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
