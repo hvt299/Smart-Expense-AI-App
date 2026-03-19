@@ -41,6 +41,7 @@ class _AiChatInputState extends State<AiChatInput> {
           initialAmount: result['amount'],
           initialCategory: result['category'],
           initialNote: result['note'],
+          initialType: result['type'],
         ),
       );
     } else {
@@ -99,6 +100,7 @@ class _AiChatInputState extends State<AiChatInput> {
                 controller: _chatController,
                 textInputAction: TextInputAction.send,
                 enabled: !_isLoading,
+                onChanged: (val) => setState(() {}),
                 onTapOutside: (event) =>
                     FocusManager.instance.primaryFocus?.unfocus(),
                 decoration: InputDecoration(
@@ -152,12 +154,16 @@ class _AiChatInputState extends State<AiChatInput> {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Icon(
+                    : Icon(
                         Icons.send_rounded,
-                        color: Colors.white,
+                        color: _chatController.text.trim().isEmpty
+                            ? Colors.white54
+                            : Colors.white,
                         size: 20,
                       ),
-                onPressed: _isLoading ? null : _submit,
+                onPressed: (_isLoading || _chatController.text.trim().isEmpty)
+                    ? null
+                    : _submit,
               ),
             ),
           ],

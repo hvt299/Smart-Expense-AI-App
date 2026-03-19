@@ -393,6 +393,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
                   CurrencyInputFormatter(),
+                  LengthLimitingTextInputFormatter(15),
                 ],
                 style: TextStyle(
                   fontSize: 24,
