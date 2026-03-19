@@ -25,19 +25,34 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
 
-  final List<String> _categories = [
+  String _transactionType = 'expense';
+
+  final List<String> _expenseCategories = [
     'Ăn uống',
     'Di chuyển',
     'Mua sắm',
     'Hóa đơn',
     'Khác',
   ];
-  String _selectedCategory = 'Ăn uống';
+
+  final List<String> _incomeCategories = [
+    'Lương',
+    'Thưởng',
+    'Freelance',
+    'Kinh doanh',
+    'Khác',
+  ];
+
+  late String _selectedCategory;
+
   DateTime _selectedDate = DateTime.now();
+  TimeOfDay _selectedTime = TimeOfDay.now();
 
   @override
   void initState() {
     super.initState();
+    _selectedCategory = _expenseCategories.first;
+
     if (widget.initialAmount != null && widget.initialAmount! > 0) {
       _amountController.text = NumberFormat(
         '#,##0',
@@ -47,8 +62,8 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       _noteController.text = widget.initialNote!;
     }
     if (widget.initialCategory != null) {
-      if (!_categories.contains(widget.initialCategory!)) {
-        _categories.add(widget.initialCategory!);
+      if (!_expenseCategories.contains(widget.initialCategory!)) {
+        _expenseCategories.add(widget.initialCategory!);
       }
       _selectedCategory = widget.initialCategory!;
     }
@@ -80,9 +95,31 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
           FilledButton(
             onPressed: () {
               final newCat = textController.text.trim();
-              if (newCat.isNotEmpty && !_categories.contains(newCat)) {
+              if (newCat.isEmpty) return;
+
+              final currentCategories = _transactionType == 'expense'
+                  ? _expenseCategories
+                  : _incomeCategories;
+              final oppositeCategories = _transactionType == 'expense'
+                  ? _incomeCategories
+                  : _expenseCategories;
+
+              if (oppositeCategories.contains(newCat)) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Danh mục "$newCat" đã được dùng cho phần ${_transactionType == 'expense' ? 'Thu nhập' : 'Chi tiêu'}!',
+                    ),
+                    backgroundColor: Colors.orange.shade800,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+                return;
+              }
+
+              if (!currentCategories.contains(newCat)) {
                 setState(() {
-                  _categories.add(newCat);
+                  currentCategories.add(newCat);
                   _selectedCategory = newCat;
                 });
               }
@@ -120,6 +157,29 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     }
   }
 
+  Future<void> _pickTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null && picked != _selectedTime) {
+      setState(() {
+        _selectedTime = picked;
+      });
+    }
+  }
+
   Future<void> _submit() async {
     final amountText = _amountController.text.trim();
     if (amountText.isEmpty) return;
@@ -128,6 +188,14 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         double.tryParse(amountText.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
     if (amount <= 0) return;
 
+    final finalDateTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    );
+
     debugPrint('Đang lưu lên Firebase...');
 
     try {
@@ -135,7 +203,8 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         'amount': amount,
         'category': _selectedCategory,
         'note': _noteController.text.trim(),
-        'date': Timestamp.fromDate(_selectedDate),
+        'dateTime': Timestamp.fromDate(finalDateTime),
+        'type': _transactionType,
         'createdAt': FieldValue.serverTimestamp(),
         'uid': FirebaseAuth.instance.currentUser?.uid,
       });
@@ -179,6 +248,14 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final currentCategories = _transactionType == 'expense'
+        ? _expenseCategories
+        : _incomeCategories;
+
+    if (!currentCategories.contains(_selectedCategory)) {
+      _selectedCategory = currentCategories.first;
+    }
+
     return AnimatedPadding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -214,6 +291,93 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               ),
               const SizedBox(height: 24),
 
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.all(4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () =>
+                            setState(() => _transactionType = 'expense'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: _transactionType == 'expense'
+                                ? Colors.white
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: _transactionType == 'expense'
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Chi tiêu',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: _transactionType == 'expense'
+                                    ? Colors.red.shade500
+                                    : Colors.grey.shade500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () =>
+                            setState(() => _transactionType = 'income'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: _transactionType == 'income'
+                                ? Colors.white
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: _transactionType == 'income'
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Thu nhập',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: _transactionType == 'income'
+                                    ? Colors.green.shade600
+                                    : Colors.grey.shade500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
               TextField(
                 controller: _amountController,
                 keyboardType: TextInputType.number,
@@ -221,10 +385,12 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                   FilteringTextInputFormatter.digitsOnly,
                   CurrencyInputFormatter(),
                 ],
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF00B4D8),
+                  color: _transactionType == 'expense'
+                      ? const Color(0xFF00B4D8)
+                      : Colors.green.shade600,
                 ),
                 decoration: InputDecoration(
                   labelText: 'Số tiền',
@@ -255,7 +421,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  ..._categories.map((category) {
+                  ...currentCategories.map((category) {
                     final isSelected = _selectedCategory == category;
                     return ChoiceChip(
                       label: Text(category),
@@ -326,35 +492,74 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               ),
               const SizedBox(height: 20),
 
-              InkWell(
-                onTap: _pickDate,
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today_rounded,
-                        size: 20,
-                        color: Colors.grey.shade600,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Ngày: ${DateFormat('dd/MM/yyyy').format(_selectedDate)}',
-                        style: TextStyle(
-                          color: Colors.grey.shade700,
-                          fontWeight: FontWeight.w500,
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: _pickDate,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              size: 20,
+                              color: Colors.grey.shade600,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              DateFormat('dd/MM/yyyy').format(_selectedDate),
+                              style: TextStyle(
+                                color: Colors.grey.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const Spacer(),
+                            Icon(
+                              Icons.edit_calendar_rounded,
+                              size: 18,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ],
                         ),
                       ),
-                      const Spacer(),
-                      Icon(
-                        Icons.edit_calendar_rounded,
-                        size: 18,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: InkWell(
+                      onTap: _pickTime,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.access_time_rounded,
+                              size: 20,
+                              color: Colors.grey.shade600,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _selectedTime.format(context),
+                              style: TextStyle(
+                                color: Colors.grey.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const Spacer(),
+                            Icon(
+                              Icons.timer,
+                              size: 18,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 32),
 

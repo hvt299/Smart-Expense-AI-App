@@ -27,10 +27,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _transactionsStream = FirebaseFirestore.instance
         .collection('transactions')
         .where(
-          'date',
+          'dateTime',
           isGreaterThanOrEqualTo: Timestamp.fromDate(firstDayOfMonth),
         )
-        .orderBy('date', descending: true)
+        .orderBy('dateTime', descending: true)
         .snapshots();
   }
 
@@ -46,7 +46,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     Map<String, dynamic> data,
     double amount,
   ) {
-    final dateTime = (data['date'] as Timestamp).toDate();
+    final isIncome = (data['type'] ?? 'expense') == 'income';
+    final sign = isIncome ? '+' : '-';
+    final color = isIncome ? Colors.green.shade600 : Colors.red;
+
+    final timestamp = data['dateTime'] ?? data['date'];
+    final dateTime = timestamp != null
+        ? (timestamp as Timestamp).toDate()
+        : DateTime.now();
     final timeString = DateFormat('HH:mm - dd/MM/yyyy').format(dateTime);
 
     showModalBottomSheet(
@@ -71,13 +78,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: 24),
             CircleAvatar(
               radius: 30,
-              backgroundColor: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.1),
+              backgroundColor: color.withValues(alpha: 0.1),
               child: Icon(
-                Icons.receipt_long,
+                isIncome
+                    ? Icons.account_balance_wallet_rounded
+                    : Icons.receipt_long,
                 size: 30,
-                color: Theme.of(context).colorScheme.primary,
+                color: color,
               ),
             ),
             const SizedBox(height: 16),
@@ -91,11 +98,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              '- ${NumberFormat('#,##0').format(amount).replaceAll(',', '.')} đ',
-              style: const TextStyle(
+              '$sign ${NumberFormat('#,##0').format(amount).replaceAll(',', '.')} đ',
+              style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w900,
-                color: Colors.red,
+                color: color,
               ),
             ),
             const SizedBox(height: 24),
@@ -238,16 +245,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             }
 
             final docs = snapshot.data?.docs ?? [];
-            double totalSpentThisMonth = 0;
-            Map<String, double> categoryTotals = {};
+            double totalExpense = 0;
+            double totalIncome = 0;
+            Map<String, double> expenseCategories = {};
+            Map<String, double> incomeCategories = {};
 
             for (var doc in docs) {
               final data = doc.data() as Map<String, dynamic>;
               final amount = (data['amount'] ?? 0).toDouble();
               final category = data['category'] ?? 'Khác';
-              totalSpentThisMonth += amount;
-              categoryTotals[category] =
-                  (categoryTotals[category] ?? 0) + amount;
+              final type = data['type'] ?? 'expense';
+
+              if (type == 'expense') {
+                totalExpense += amount;
+                expenseCategories[category] =
+                    (expenseCategories[category] ?? 0) + amount;
+              } else {
+                totalIncome += amount;
+                incomeCategories[category] =
+                    (incomeCategories[category] ?? 0) + amount;
+              }
             }
 
             return SafeArea(
@@ -261,8 +278,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           SummaryCard(
-                            totalSpent: totalSpentThisMonth,
-                            categoryTotals: categoryTotals,
+                            totalExpense: totalExpense,
+                            totalIncome: totalIncome,
+                            expenseCategories: expenseCategories,
+                            incomeCategories: incomeCategories,
                           ),
                           const SizedBox(height: 16),
                           const BudgetAlertBar(),
@@ -301,6 +320,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 final data =
                                     docs[index].data() as Map<String, dynamic>;
                                 final amount = (data['amount'] ?? 0).toDouble();
+                                final isIncome =
+                                    (data['type'] ?? 'expense') == 'income';
                                 return Card(
                                   elevation: 0,
                                   color: Colors.white,
@@ -336,9 +357,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     ),
                                     subtitle: Text(data['category'] ?? ''),
                                     trailing: Text(
-                                      '- ${NumberFormat('#,##0').format(amount).replaceAll(',', '.')} đ',
-                                      style: const TextStyle(
-                                        color: Colors.red,
+                                      '${isIncome ? '+' : '-'} ${NumberFormat('#,##0').format(amount).replaceAll(',', '.')} đ',
+                                      style: TextStyle(
+                                        color: isIncome
+                                            ? Colors.green.shade600
+                                            : Colors.red,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 15,
                                       ),

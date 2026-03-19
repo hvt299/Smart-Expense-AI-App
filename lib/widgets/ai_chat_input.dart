@@ -23,7 +23,7 @@ class _AiChatInputState extends State<AiChatInput> {
     final text = _chatController.text.trim();
     if (text.isEmpty) return;
 
-    FocusScope.of(context).unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _isLoading = true);
 
     final result = await AiService.analyzeExpense(text);
@@ -83,7 +83,7 @@ class _AiChatInputState extends State<AiChatInput> {
               child: IconButton(
                 icon: Icon(Icons.add_rounded, color: theme.colorScheme.primary),
                 onPressed: () {
-                  FocusScope.of(context).unfocus();
+                  FocusManager.instance.primaryFocus?.unfocus();
                   showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
@@ -99,6 +99,8 @@ class _AiChatInputState extends State<AiChatInput> {
                 controller: _chatController,
                 textInputAction: TextInputAction.send,
                 enabled: !_isLoading,
+                onTapOutside: (event) =>
+                    FocusManager.instance.primaryFocus?.unfocus(),
                 decoration: InputDecoration(
                   hintText: _isLoading
                       ? 'AI đang phân tích...'
