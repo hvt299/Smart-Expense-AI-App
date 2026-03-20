@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/auth_provider.dart';
+import '../utils/snackbar_helper.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -40,11 +41,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       await user.updatePassword(_newPasswordCtrl.text);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đổi mật khẩu thành công! Đang đăng xuất...'),
-          backgroundColor: Colors.green,
-        ),
+      SnackBarHelper.showSuccess(
+        context,
+        'Đổi mật khẩu thành công! Đang đăng xuất...',
       );
 
       await ref.read(authServiceProvider).signOut();
@@ -57,9 +56,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       } else if (e.code == 'weak-password') {
         message = 'Mật khẩu mới quá yếu.';
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.red),
-      );
+      SnackBarHelper.showError(context, message);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

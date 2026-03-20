@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/ai_service.dart';
 import 'add_transaction_bottom_sheet.dart';
+import '../utils/snackbar_helper.dart';
 
 class AiChatInput extends StatefulWidget {
   const AiChatInput({super.key});
@@ -45,13 +46,9 @@ class _AiChatInputState extends State<AiChatInput> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Không thể kết nối đến AI. Vui lòng kiểm tra lại Server!',
-          ),
-          backgroundColor: Colors.red,
-        ),
+      SnackBarHelper.showError(
+        context,
+        'Không thể kết nối đến AI. Vui lòng kiểm tra lại Server!',
       );
     }
   }

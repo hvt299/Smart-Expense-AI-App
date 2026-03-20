@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
+import '../widgets/theme_toggle_button.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
 
@@ -170,13 +171,7 @@ class ProfileScreen extends ConsumerWidget {
                       'Giao diện tối',
                       style: TextStyle(fontWeight: FontWeight.w500),
                     ),
-                    trailing: Switch(
-                      value: isDarkMode,
-                      activeThumbColor: theme.colorScheme.primary,
-                      onChanged: (val) {
-                        ref.read(themeProvider.notifier).toggleTheme(val);
-                      },
-                    ),
+                    trailing: const ThemeToggleButton(),
                   ),
                 ]),
                 const SizedBox(height: 24),

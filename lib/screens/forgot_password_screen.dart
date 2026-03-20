@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
+import '../utils/snackbar_helper.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -16,8 +17,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   bool _isLoading = false;
   String? _emailError;
-  String? _generalMessage;
-  bool _isSuccess = false;
 
   @override
   void dispose() {
@@ -29,7 +28,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Future<void> _submit() async {
     setState(() {
       _emailError = null;
-      _generalMessage = null;
     });
 
     final email = _emailController.text.trim();
@@ -51,20 +49,20 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     try {
       await ref.read(authServiceProvider).resetPassword(email);
       if (mounted) {
-        setState(() {
-          _generalMessage =
-              'Link khôi phục đã được gửi! Vui lòng kiểm tra hộp thư.';
-          _isSuccess = true;
-        });
+        SnackBarHelper.showSuccess(
+          context,
+          'Link khôi phục đã được gửi! Vui lòng kiểm tra hộp thư.',
+        );
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) Navigator.pop(context);
         });
       }
     } catch (e) {
-      setState(() {
-        _generalMessage = e.toString().replaceAll('Exception: ', '');
-        _isSuccess = false;
-      });
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        e.toString().replaceAll('Exception: ', ''),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -144,21 +142,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       errorText: _emailError,
                     ),
                   ),
-
-                  if (_generalMessage != null) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      _generalMessage!,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: _isSuccess ? Colors.green.shade700 : Colors.red,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ] else ...[
-                    const SizedBox(height: 24),
-                  ],
 
                   SizedBox(
                     height: 52,

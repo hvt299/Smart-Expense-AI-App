@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../utils/snackbar_helper.dart';
 
 class AddTransactionBottomSheet extends StatefulWidget {
   final String? transactionId;
@@ -112,14 +113,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                   : _expenseCategories;
 
               if (oppositeCategories.contains(newCat)) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Danh mục "$newCat" đã được dùng cho phần ${_transactionType == 'expense' ? 'Thu nhập' : 'Chi tiêu'}!',
-                    ),
-                    backgroundColor: Colors.orange.shade800,
-                    behavior: SnackBarBehavior.floating,
-                  ),
+                SnackBarHelper.showSuccess(
+                  context,
+                  'Danh mục "$newCat" đã được dùng cho phần ${_transactionType == 'expense' ? 'Thu nhập' : 'Chi tiêu'}!',
                 );
                 return;
               }
@@ -218,35 +214,16 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       if (!mounted) return;
       Navigator.pop(context);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle_outline, color: Colors.white),
-              const SizedBox(width: 8),
-              Text(
-                widget.transactionId != null
-                    ? 'Đã cập nhật giao dịch!'
-                    : 'Đã lưu giao dịch thành công!',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
+      SnackBarHelper.showSuccess(
+        context,
+        widget.transactionId != null
+            ? 'Đã cập nhật giao dịch!'
+            : 'Đã lưu giao dịch thành công!',
       );
     } catch (e) {
       debugPrint('Lỗi lưu Firebase: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Lỗi khi lưu: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      SnackBarHelper.showError(context, 'Lỗi khi lưu: $e');
     }
   }
 

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/add_transaction_bottom_sheet.dart';
+import '../utils/snackbar_helper.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -32,12 +33,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           .doc(docId)
           .delete();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã xóa giao dịch thành công'),
-            backgroundColor: Colors.black87,
-          ),
-        );
+        SnackBarHelper.showSuccess(context, 'Đã xóa giao dịch thành công!');
       }
     } catch (e) {
       debugPrint('Lỗi xóa: $e');
