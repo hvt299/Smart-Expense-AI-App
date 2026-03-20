@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
+import '../utils/snackbar_helper.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -16,8 +17,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   bool _isLoading = false;
   String? _emailError;
-  String? _generalMessage;
-  bool _isSuccess = false;
 
   @override
   void dispose() {
@@ -29,7 +28,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Future<void> _submit() async {
     setState(() {
       _emailError = null;
-      _generalMessage = null;
     });
 
     final email = _emailController.text.trim();
@@ -51,20 +49,20 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     try {
       await ref.read(authServiceProvider).resetPassword(email);
       if (mounted) {
-        setState(() {
-          _generalMessage =
-              'Link khôi phục đã được gửi! Vui lòng kiểm tra hộp thư.';
-          _isSuccess = true;
-        });
+        SnackBarHelper.showSuccess(
+          context,
+          'Link khôi phục đã được gửi! Vui lòng kiểm tra hộp thư.',
+        );
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) Navigator.pop(context);
         });
       }
     } catch (e) {
-      setState(() {
-        _generalMessage = e.toString().replaceAll('Exception: ', '');
-        _isSuccess = false;
-      });
+      if (!mounted) return;
+      SnackBarHelper.showError(
+        context,
+        e.toString().replaceAll('Exception: ', ''),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -72,12 +70,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: Colors.white,
           elevation: 0,
           title: const Text(
             'Khôi phục mật khẩu',
@@ -101,7 +99,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
+                        color: Colors.orange.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -139,37 +137,23 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     onChanged: (_) => setState(() => _emailError = null),
                     onSubmitted: (_) => _submit(),
                     decoration: InputDecoration(
-                      labelText: 'Email của bạn',
+                      labelText: 'Email của bạn *',
                       prefixIcon: const Icon(Icons.email_outlined, size: 22),
                       errorText: _emailError,
                     ),
                   ),
-
-                  if (_generalMessage != null) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      _generalMessage!,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: _isSuccess ? Colors.green.shade700 : Colors.red,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ] else ...[
-                    const SizedBox(height: 24),
-                  ],
+                  const SizedBox(height: 24),
 
                   SizedBox(
                     height: 52,
                     child: FilledButton(
                       onPressed: _isLoading ? null : _submit,
                       child: _isLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: theme.colorScheme.onPrimary,
                                 strokeWidth: 2,
                               ),
                             )

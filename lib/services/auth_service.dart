@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../core/constants.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -32,14 +33,17 @@ class AuthService {
       if (user != null) {
         await user.updateDisplayName(fullName);
 
+        final defaultAvatar = AppConstants.getDefaultAvatar(fullName);
+        await user.updatePhotoURL(defaultAvatar);
+
         await user.sendEmailVerification();
 
         await _firestore.collection('users').doc(user.uid).set({
           'uid': user.uid,
           'email': email,
           'fullName': fullName,
-          'avatarUrl':
-              'https://ui-avatars.com/api/?name=${Uri.encodeComponent(fullName)}&background=random',
+          'avatarUrl': defaultAvatar,
+          'initialAvatarUrl': defaultAvatar,
           'createdAt': FieldValue.serverTimestamp(),
         });
       }
@@ -78,13 +82,16 @@ class AuthService {
             .get();
 
         if (!userDoc.exists) {
+          final googleAvatar =
+              user.photoURL ??
+              AppConstants.getDefaultAvatar(user.displayName ?? "G");
+
           await _firestore.collection('users').doc(user.uid).set({
             'uid': user.uid,
             'email': user.email,
             'fullName': user.displayName ?? 'Người dùng Google',
-            'avatarUrl':
-                user.photoURL ??
-                'https://ui-avatars.com/api/?name=${Uri.encodeComponent(user.displayName ?? "G")}&background=random',
+            'avatarUrl': googleAvatar,
+            'initialAvatarUrl': googleAvatar,
             'createdAt': FieldValue.serverTimestamp(),
           });
         } else {

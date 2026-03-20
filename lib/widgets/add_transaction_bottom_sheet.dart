@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../core/constants.dart';
+import '../utils/snackbar_helper.dart';
+import '../utils/currency_formatter.dart';
 
 class AddTransactionBottomSheet extends StatefulWidget {
   final String? transactionId;
@@ -31,20 +34,12 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   final _noteController = TextEditingController();
 
   late String _transactionType;
-  final List<String> _expenseCategories = [
-    'Ăn uống',
-    'Di chuyển',
-    'Mua sắm',
-    'Hóa đơn',
-    'Khác',
-  ];
-  final List<String> _incomeCategories = [
-    'Lương',
-    'Thưởng',
-    'Freelance',
-    'Kinh doanh',
-    'Khác',
-  ];
+  final List<String> _expenseCategories = List.from(
+    AppConstants.defaultExpenseCategories,
+  );
+  final List<String> _incomeCategories = List.from(
+    AppConstants.defaultIncomeCategories,
+  );
   late String _selectedCategory;
 
   DateTime _selectedDate = DateTime.now();
@@ -112,14 +107,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                   : _expenseCategories;
 
               if (oppositeCategories.contains(newCat)) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Danh mục "$newCat" đã được dùng cho phần ${_transactionType == 'expense' ? 'Thu nhập' : 'Chi tiêu'}!',
-                    ),
-                    backgroundColor: Colors.orange.shade800,
-                    behavior: SnackBarBehavior.floating,
-                  ),
+                SnackBarHelper.showSuccess(
+                  context,
+                  'Danh mục "$newCat" đã được dùng cho phần ${_transactionType == 'expense' ? 'Thu nhập' : 'Chi tiêu'}!',
                 );
                 return;
               }
@@ -218,35 +208,16 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       if (!mounted) return;
       Navigator.pop(context);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle_outline, color: Colors.white),
-              const SizedBox(width: 8),
-              Text(
-                widget.transactionId != null
-                    ? 'Đã cập nhật giao dịch!'
-                    : 'Đã lưu giao dịch thành công!',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
+      SnackBarHelper.showSuccess(
+        context,
+        widget.transactionId != null
+            ? 'Đã cập nhật giao dịch!'
+            : 'Đã lưu giao dịch thành công!',
       );
     } catch (e) {
       debugPrint('Lỗi lưu Firebase: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Lỗi khi lưu: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      SnackBarHelper.showError(context, 'Lỗi khi lưu: $e');
     }
   }
 
@@ -268,9 +239,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       curve: Curves.easeOutCubic,
       child: Container(
         padding: const EdgeInsets.only(left: 24, right: 24, top: 16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -302,7 +273,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
 
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: theme.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 padding: const EdgeInsets.all(4),
@@ -316,7 +287,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
                             color: _transactionType == 'expense'
-                                ? Colors.white
+                                ? theme.colorScheme.surface
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
                             boxShadow: _transactionType == 'expense'
@@ -353,7 +324,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
                             color: _transactionType == 'income'
-                                ? Colors.white
+                                ? theme.colorScheme.surface
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
                             boxShadow: _transactionType == 'income'
@@ -403,7 +374,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                       : Colors.green.shade600,
                 ),
                 decoration: InputDecoration(
-                  labelText: 'Số tiền',
+                  labelText: 'Số tiền *',
                   suffixText: 'VNĐ',
                   suffixStyle: const TextStyle(
                     fontSize: 16,
@@ -447,7 +418,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                       labelStyle: TextStyle(
                         color: isSelected
                             ? theme.colorScheme.primary
-                            : Colors.grey.shade700,
+                            : theme.textTheme.bodyMedium?.color,
                         fontWeight: isSelected
                             ? FontWeight.bold
                             : FontWeight.normal,
@@ -459,24 +430,26 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                     );
                   }),
                   ChoiceChip(
-                    label: const Row(
+                    label: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.add_rounded,
                           size: 16,
-                          color: Colors.black54,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                         SizedBox(width: 4),
                         Text(
                           'Tùy chọn',
-                          style: TextStyle(color: Colors.black54),
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
                     selected: false,
                     onSelected: (_) => _addNewCategory(),
-                    backgroundColor: Colors.grey.shade100,
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
@@ -521,7 +494,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                             Text(
                               DateFormat('dd/MM/yyyy').format(_selectedDate),
                               style: TextStyle(
-                                color: Colors.grey.shade700,
+                                color: theme.textTheme.bodyMedium?.color,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -554,7 +527,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                             Text(
                               '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}:00',
                               style: TextStyle(
-                                color: Colors.grey.shade700,
+                                color: theme.textTheme.bodyMedium?.color,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -594,24 +567,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class CurrencyInputFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    if (newValue.text.isEmpty) return newValue;
-    String numericOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-    if (numericOnly.isEmpty) return newValue.copyWith(text: '');
-    final number = int.parse(numericOnly);
-    final formatted = NumberFormat('#,##0').format(number).replaceAll(',', '.');
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

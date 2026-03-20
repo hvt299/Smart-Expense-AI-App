@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "899763385126-qcrhv1rv4lo2c2elk8kvq8eh9h5eo0uc.apps.googleusercontent.com",
+          "client_id": "899763385126-mc9rvplo2415ejs3rlqtia9b1d0burts.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.smart_expense_ai_app",
-            "certificate_hash": "5e3bdcbedfaef3800f3c852c45b21f707cc0d11e"
+            "certificate_hash": "e0144f10193e06fc6f2e896087e2a2291a8fab5b"
           }
         },
         {

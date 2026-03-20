@@ -81,13 +81,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    Theme.of(context);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.white.withValues(alpha: 0.75),
+        backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.75),
         elevation: 0,
         scrolledUnderElevation: 0,
         flexibleSpace: ClipRect(
@@ -98,11 +97,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         ),
         title: const Text(
           'Thống kê chi tiết',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         centerTitle: true,
         bottom: PreferredSize(
@@ -202,7 +197,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
@@ -316,7 +311,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
@@ -336,7 +331,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             decoration: BoxDecoration(
                               color: _showExpense
-                                  ? Colors.red.shade50
+                                  ? Colors.red.withValues(alpha: 0.15)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -361,7 +356,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             decoration: BoxDecoration(
                               color: !_showExpense
-                                  ? Colors.green.shade50
+                                  ? Colors.green.withValues(alpha: 0.15)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -396,7 +391,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
@@ -519,7 +514,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                       const SizedBox(height: 8),
                                       LinearProgressIndicator(
                                         value: percentage,
-                                        backgroundColor: Colors.grey.shade100,
+                                        backgroundColor: theme
+                                            .colorScheme
+                                            .surfaceContainerHighest,
                                         valueColor:
                                             AlwaysStoppedAnimation<Color>(
                                               _getColorForCategory(
@@ -549,7 +546,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           Icon(
                             Icons.pie_chart_outline_rounded,
                             size: 64,
-                            color: Colors.grey.shade300,
+                            color: theme.colorScheme.surfaceContainerHighest,
                           ),
                           const SizedBox(height: 16),
                           Text(
