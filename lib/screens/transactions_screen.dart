@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/add_transaction_bottom_sheet.dart';
+import '../utils/snackbar_helper.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -32,12 +33,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           .doc(docId)
           .delete();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã xóa giao dịch thành công'),
-            backgroundColor: Colors.black87,
-          ),
-        );
+        SnackBarHelper.showSuccess(context, 'Đã xóa giao dịch thành công!');
       }
     } catch (e) {
       debugPrint('Lỗi xóa: $e');
@@ -112,7 +108,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -274,7 +270,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       : 'all',
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Colors.grey.shade50,
+                    fillColor: theme.colorScheme.surfaceContainerHighest,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
@@ -313,7 +309,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       vertical: 16,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
+                      color: theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
@@ -333,7 +329,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                 ? FontWeight.bold
                                 : FontWeight.normal,
                             color: tempStartDate != null
-                                ? Colors.black87
+                                ? theme.textTheme.bodyMedium?.color
                                 : Colors.grey.shade600,
                           ),
                         ),
@@ -389,10 +385,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: Colors.white.withValues(alpha: 0.75),
+        backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.75),
         elevation: 0,
         scrolledUnderElevation: 0,
         flexibleSpace: ClipRect(
@@ -403,11 +400,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         ),
         title: const Text(
           'Lịch sử giao dịch',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         centerTitle: true,
         actions: [
@@ -418,8 +411,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 icon: Icon(
                   Icons.filter_list_rounded,
                   color: _isFilterActive
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.black87,
+                      ? theme.colorScheme.primary
+                      : theme.iconTheme.color,
                 ),
                 onPressed: () {
                   final categoriesToShow = _dynamicCategories.isNotEmpty
@@ -527,7 +520,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         ? Icons.search_off_rounded
                         : Icons.receipt_long_rounded,
                     size: 64,
-                    color: Colors.grey.shade300,
+                    color: theme.colorScheme.surfaceContainerHighest,
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -644,11 +637,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 },
                 child: Card(
                   elevation: 0,
-                  color: Colors.white,
+                  color: theme.colorScheme.surface,
                   margin: const EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: Colors.grey.shade100),
+                    side: BorderSide(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                    ),
                   ),
                   child: ListTile(
                     onTap: () {

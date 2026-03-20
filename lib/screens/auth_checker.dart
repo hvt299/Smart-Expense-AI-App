@@ -24,13 +24,13 @@ class AuthChecker extends ConsumerWidget {
         return const LoginScreen();
       },
       loading: () => Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Center(
           child: CircularProgressIndicator(color: theme.colorScheme.primary),
         ),
       ),
       error: (e, trace) => Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -46,7 +46,10 @@ class AuthChecker extends ConsumerWidget {
                 Text(
                   'Đã xảy ra lỗi xác thực\n$e',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.red.shade700, fontSize: 14),
+                  style: TextStyle(
+                    color: theme.colorScheme.error,
+                    fontSize: 14,
+                  ),
                 ),
               ],
             ),

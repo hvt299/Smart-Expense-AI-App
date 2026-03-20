@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
+import '../utils/snackbar_helper.dart';
 import 'home_screen.dart';
 
 class VerifyEmailScreen extends ConsumerStatefulWidget {
@@ -19,9 +20,6 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   Timer? _checkEmailTimer;
   Timer? _countdownTimer;
   int _countdownSeconds = 0;
-
-  String? _message;
-  bool _isError = false;
 
   @override
   void initState() {
@@ -77,24 +75,22 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   }
 
   Future<void> sendVerificationEmail() async {
-    setState(() => _message = null);
-
     try {
       final user = FirebaseAuth.instance.currentUser;
       await user?.sendEmailVerification();
 
       if (!mounted) return;
-      setState(() {
-        _message = 'Đã gửi lại email xác thực! Vui lòng kiểm tra hộp thư.';
-        _isError = false;
-      });
+      SnackBarHelper.showSuccess(
+        context,
+        'Đã gửi lại email xác thực! Vui lòng kiểm tra hộp thư.',
+      );
       _startCountdown();
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _message = 'Chưa thể gửi lại lúc này. Vui lòng đợi hoặc thử lại sau!';
-        _isError = true;
-      });
+      SnackBarHelper.showError(
+        context,
+        'Chưa thể gửi lại lúc này. Vui lòng đợi hoặc thử lại sau!',
+      );
     }
   }
 
@@ -105,9 +101,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
           'Xác thực Email',
@@ -155,22 +149,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                   height: 1.5,
                 ),
               ),
-
-              if (_message != null) ...[
-                const SizedBox(height: 24),
-                Text(
-                  _message!,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: _isError ? Colors.red : Colors.green.shade700,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ] else ...[
-                const SizedBox(height: 32),
-              ],
+              const SizedBox(height: 32),
 
               SizedBox(
                 height: 52,
