@@ -51,6 +51,8 @@ class _SummaryCardState extends State<SummaryCard> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     final currentTotal = _showExpense
         ? widget.totalExpense
         : widget.totalIncome;
@@ -64,7 +66,7 @@ class _SummaryCardState extends State<SummaryCard> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -79,7 +81,7 @@ class _SummaryCardState extends State<SummaryCard> {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
+              color: theme.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
             ),
             padding: const EdgeInsets.all(4),
@@ -91,7 +93,9 @@ class _SummaryCardState extends State<SummaryCard> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
-                        color: _showExpense ? Colors.white : Colors.transparent,
+                        color: _showExpense
+                            ? theme.colorScheme.surface
+                            : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: _showExpense
                             ? [
@@ -124,7 +128,7 @@ class _SummaryCardState extends State<SummaryCard> {
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
                         color: !_showExpense
-                            ? Colors.white
+                            ? theme.colorScheme.surface
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: !_showExpense
@@ -222,11 +226,11 @@ class _SummaryCardState extends State<SummaryCard> {
                                   value: amount,
                                   title: '${percentage.toStringAsFixed(0)}%',
                                   radius: percentage > 30 ? 18 : 14,
-                                  titleStyle: const TextStyle(
+                                  titleStyle: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
-                                    shadows: [
+                                    shadows: const [
                                       Shadow(
                                         color: Colors.black45,
                                         blurRadius: 2,
@@ -264,7 +268,7 @@ class _SummaryCardState extends State<SummaryCard> {
                               category,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey.shade700,
+                                color: theme.textTheme.bodyMedium?.color,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),

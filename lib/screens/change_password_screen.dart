@@ -70,7 +70,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         centerTitle: true,
-        backgroundColor: Colors.white.withValues(alpha: 0.75),
+        backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.75),
         elevation: 0,
         scrolledUnderElevation: 0,
         flexibleSpace: ClipRect(
@@ -81,11 +81,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         ),
         title: const Text(
           'Đổi mật khẩu',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
       ),
       body: _isLoading

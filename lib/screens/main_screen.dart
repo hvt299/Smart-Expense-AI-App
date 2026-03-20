@@ -28,7 +28,6 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) => setState(() => _currentIndex = index),
-        backgroundColor: Colors.white,
         elevation: 10,
         indicatorColor: Theme.of(
           context,

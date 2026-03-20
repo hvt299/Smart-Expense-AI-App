@@ -8,6 +8,7 @@ class BudgetAlertBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return const SizedBox.shrink();
 
@@ -22,7 +23,7 @@ class BudgetAlertBar extends StatelessWidget {
           .snapshots(),
       builder: (context, userSnapshot) {
         if (userSnapshot.connectionState == ConnectionState.waiting) {
-          return _buildLoadingSkeleton();
+          return _buildLoadingSkeleton(context);
         }
 
         final userData = userSnapshot.data?.data() as Map<String, dynamic>?;
@@ -31,6 +32,7 @@ class BudgetAlertBar extends StatelessWidget {
 
         if (budget <= 0) {
           return _buildContainer(
+            context,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -59,7 +61,7 @@ class BudgetAlertBar extends StatelessWidget {
               .snapshots(),
           builder: (context, txSnapshot) {
             if (txSnapshot.connectionState == ConnectionState.waiting) {
-              return _buildLoadingSkeleton();
+              return _buildLoadingSkeleton(context);
             }
 
             double spent = 0;
@@ -97,6 +99,7 @@ class BudgetAlertBar extends StatelessWidget {
                 : 'Vượt ngân sách: ${formatter.format(remaining.abs()).replaceAll(',', '.')} đ';
 
             return _buildContainer(
+              context,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -126,7 +129,8 @@ class BudgetAlertBar extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: safePercent,
                       minHeight: 10,
-                      backgroundColor: Colors.grey.shade100,
+                      backgroundColor:
+                          theme.colorScheme.surfaceContainerHighest,
                       valueColor: AlwaysStoppedAnimation<Color>(progressColor),
                     ),
                   ),
@@ -147,7 +151,7 @@ class BudgetAlertBar extends StatelessWidget {
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: remaining >= 0
-                              ? Colors.grey.shade800
+                              ? theme.textTheme.bodyMedium?.color
                               : Colors.red.shade500,
                         ),
                       ),
@@ -162,11 +166,13 @@ class BudgetAlertBar extends StatelessWidget {
     );
   }
 
-  Widget _buildContainer({required Widget child}) {
+  Widget _buildContainer(BuildContext context, {required Widget child}) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -180,23 +186,34 @@ class BudgetAlertBar extends StatelessWidget {
     );
   }
 
-  Widget _buildLoadingSkeleton() {
+  Widget _buildLoadingSkeleton(BuildContext context) {
+    final theme = Theme.of(context);
+
     return _buildContainer(
+      context,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(width: 120, height: 20, color: Colors.grey.shade200),
-              Container(width: 40, height: 20, color: Colors.grey.shade200),
+              Container(
+                width: 120,
+                height: 20,
+                color: theme.colorScheme.surfaceContainerHighest,
+              ),
+              Container(
+                width: 40,
+                height: 20,
+                color: theme.colorScheme.surfaceContainerHighest,
+              ),
             ],
           ),
           const SizedBox(height: 16),
           Container(
             height: 10,
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
+              color: theme.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(8),
             ),
           ),
@@ -204,8 +221,16 @@ class BudgetAlertBar extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(width: 100, height: 16, color: Colors.grey.shade200),
-              Container(width: 100, height: 16, color: Colors.grey.shade200),
+              Container(
+                width: 100,
+                height: 16,
+                color: theme.colorScheme.surfaceContainerHighest,
+              ),
+              Container(
+                width: 100,
+                height: 16,
+                color: theme.colorScheme.surfaceContainerHighest,
+              ),
             ],
           ),
         ],

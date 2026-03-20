@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../core/constants.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -32,8 +33,7 @@ class AuthService {
       if (user != null) {
         await user.updateDisplayName(fullName);
 
-        final defaultAvatar =
-            'https://ui-avatars.com/api/?name=${Uri.encodeComponent(fullName)}&background=random';
+        final defaultAvatar = AppConstants.getDefaultAvatar(fullName);
         await user.updatePhotoURL(defaultAvatar);
 
         await user.sendEmailVerification();
@@ -84,7 +84,7 @@ class AuthService {
         if (!userDoc.exists) {
           final googleAvatar =
               user.photoURL ??
-              'https://ui-avatars.com/api/?name=${Uri.encodeComponent(user.displayName ?? "G")}&background=random';
+              AppConstants.getDefaultAvatar(user.displayName ?? "G");
 
           await _firestore.collection('users').doc(user.uid).set({
             'uid': user.uid,

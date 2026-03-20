@@ -60,7 +60,7 @@ class _AiChatInputState extends State<AiChatInput> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -113,7 +113,7 @@ class _AiChatInputState extends State<AiChatInput> {
                     vertical: 12,
                   ),
                   filled: true,
-                  fillColor: Colors.grey.shade100,
+                  fillColor: theme.colorScheme.surfaceContainerHighest,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                     borderSide: BorderSide.none,

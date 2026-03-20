@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/auth_provider.dart';
+import '../core/constants.dart';
 import '../widgets/summary_card.dart';
 import '../widgets/ai_chat_input.dart';
 import '../widgets/budget_alert_bar.dart';
@@ -48,6 +49,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     Map<String, dynamic> data,
     double amount,
   ) {
+    final theme = Theme.of(context);
+
     final isIncome = (data['type'] ?? 'expense') == 'income';
     final sign = isIncome ? '+' : '-';
     final color = isIncome ? Colors.green.shade600 : Colors.red;
@@ -111,7 +114,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: theme.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -181,16 +184,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final displayName = user?.displayName ?? 'Bạn';
     final firstName = displayName.split(' ').last;
     final avatarUrl =
-        user?.photoURL ??
-        'https://ui-avatars.com/api/?name=${Uri.encodeComponent(displayName)}&background=random';
+        user?.photoURL ?? AppConstants.getDefaultAvatar(displayName);
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         extendBodyBehindAppBar: true,
-        backgroundColor: Colors.grey.shade50,
         appBar: AppBar(
-          backgroundColor: Colors.white.withValues(alpha: 0.75),
+          backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.75),
           elevation: 0,
           scrolledUnderElevation: 0,
           flexibleSpace: ClipRect(
@@ -213,7 +214,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     _getGreeting(),
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Colors.grey,
                       fontWeight: FontWeight.normal,
                     ),
                   ),
@@ -222,7 +222,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
                     ),
                   ),
                 ],
@@ -231,10 +230,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           actions: [
             IconButton(
-              icon: const Icon(
-                Icons.notifications_outlined,
-                color: Colors.black87,
-              ),
+              icon: const Icon(Icons.notifications_outlined),
               onPressed: () {},
             ),
           ],
@@ -326,7 +322,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     (data['type'] ?? 'expense') == 'income';
                                 return Card(
                                   elevation: 0,
-                                  color: Colors.white,
+                                  color: theme.colorScheme.surface,
                                   margin: const EdgeInsets.only(bottom: 12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16),

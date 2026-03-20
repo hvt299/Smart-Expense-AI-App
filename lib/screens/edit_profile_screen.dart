@@ -131,7 +131,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         centerTitle: true,
-        backgroundColor: Colors.white.withValues(alpha: 0.75),
+        backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.75),
         elevation: 0,
         scrolledUnderElevation: 0,
         flexibleSpace: ClipRect(
@@ -142,11 +142,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         title: const Text(
           'Chỉnh sửa hồ sơ',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
       ),
       body: _isLoading
@@ -164,7 +160,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           CircleAvatar(
                             radius: 50,
                             backgroundImage: NetworkImage(_avatarUrl),
-                            backgroundColor: Colors.grey.shade200,
+                            backgroundColor:
+                                theme.colorScheme.surfaceContainerHighest,
                           ),
 
                           if (_avatarUrl != _originalAvatar)
@@ -198,7 +195,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       child: CircleAvatar(
                                         radius: 20,
                                         backgroundImage: NetworkImage(url),
-                                        backgroundColor: Colors.grey.shade100,
+                                        backgroundColor: theme
+                                            .colorScheme
+                                            .surfaceContainerHighest,
                                       ),
                                     ),
                                   ),

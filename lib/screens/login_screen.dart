@@ -201,7 +201,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         textAlign: TextAlign.center,
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w800,
-                          color: Colors.black87,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -381,7 +380,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   height: 1.4,
                                   color: _termsError
                                       ? Colors.red
-                                      : Colors.grey.shade700,
+                                      : theme.textTheme.bodyMedium?.color,
                                 ),
                               ),
                             ),
@@ -395,11 +394,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         child: FilledButton(
                           onPressed: _isLoading ? null : _submit,
                           child: _isLoading
-                              ? const SizedBox(
+                              ? SizedBox(
                                   height: 20,
                                   width: 20,
                                   child: CircularProgressIndicator(
-                                    color: Colors.white,
+                                    color: theme.colorScheme.onPrimary,
                                     strokeWidth: 2,
                                   ),
                                 )
@@ -417,7 +416,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                       Row(
                         children: [
-                          Expanded(child: Divider(color: Colors.grey.shade300)),
+                          Expanded(child: Divider(color: theme.dividerColor)),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
@@ -429,7 +428,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ),
                           ),
-                          Expanded(child: Divider(color: Colors.grey.shade300)),
+                          Expanded(child: Divider(color: theme.dividerColor)),
                         ],
                       ),
                       const SizedBox(height: 20),
@@ -438,7 +437,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         height: 52,
                         child: OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Colors.grey.shade300),
+                            side: BorderSide(color: theme.dividerColor),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -448,11 +447,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             color: Color(0xFFDB4437),
                             size: 18,
                           ),
-                          label: const Text(
+                          label: Text(
                             'Tiếp tục với Google',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.black87,
+                              color: theme.textTheme.bodyLarge?.color,
                               fontWeight: FontWeight.w600,
                             ),
                           ),

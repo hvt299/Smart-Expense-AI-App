@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
+import '../core/constants.dart';
 import '../widgets/theme_toggle_button.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
@@ -24,7 +25,7 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         centerTitle: true,
-        backgroundColor: Colors.white.withValues(alpha: 0.75),
+        backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.75),
         elevation: 0,
         scrolledUnderElevation: 0,
         flexibleSpace: ClipRect(
@@ -35,11 +36,7 @@ class ProfileScreen extends ConsumerWidget {
         ),
         title: const Text(
           'Cá nhân',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
       ),
       body: StreamBuilder<DocumentSnapshot>(
@@ -51,8 +48,7 @@ class ProfileScreen extends ConsumerWidget {
           String displayName = user.displayName ?? 'Người dùng';
           String email = user.email ?? 'Chưa cập nhật email';
           String avatarUrl =
-              user.photoURL ??
-              'https://ui-avatars.com/api/?name=${Uri.encodeComponent(displayName)}&background=random';
+              user.photoURL ?? AppConstants.getDefaultAvatar(displayName);
 
           final creationTime = user.metadata.creationTime;
           final joinedDate = creationTime != null
@@ -122,7 +118,7 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 32),
 
                 _buildSectionHeader('TÀI KHOẢN'),
-                _buildCardGroup([
+                _buildCardGroup(context, [
                   _buildListTile(
                     icon: Icons.person_outline_rounded,
                     title: 'Chỉnh sửa hồ sơ',
@@ -152,12 +148,12 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 24),
 
                 _buildSectionHeader('CÀI ĐẶT'),
-                _buildCardGroup([
+                _buildCardGroup(context, [
                   ListTile(
                     leading: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.purple.shade50,
+                        color: Colors.purple.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -177,13 +173,13 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 24),
 
                 _buildSectionHeader('KHÁC'),
-                _buildCardGroup([
+                _buildCardGroup(context, [
                   _buildListTile(
                     icon: Icons.info_outline_rounded,
                     title: 'Thông tin ứng dụng',
                     onTap: () => _showComingSoon(context),
                     iconColor: Colors.teal,
-                    bgColor: Colors.teal.shade50,
+                    bgColor: Colors.teal.withValues(alpha: 0.1),
                   ),
                   _buildDivider(),
                   _buildListTile(
@@ -191,7 +187,7 @@ class ProfileScreen extends ConsumerWidget {
                     title: 'Hỗ trợ & Góp ý',
                     onTap: () => _showComingSoon(context),
                     iconColor: Colors.orange,
-                    bgColor: Colors.orange.shade50,
+                    bgColor: Colors.orange.withValues(alpha: 0.1),
                   ),
                 ]),
                 const SizedBox(height: 32),
@@ -202,7 +198,7 @@ class ProfileScreen extends ConsumerWidget {
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.red,
-                      backgroundColor: Colors.red.shade50,
+                      backgroundColor: Colors.red.withValues(alpha: 0.1),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -246,10 +242,12 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCardGroup(List<Widget> children) {
+  Widget _buildCardGroup(BuildContext context, List<Widget> children) {
+    final theme = Theme.of(context);
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -285,12 +283,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDivider() => const Divider(
-    height: 1,
-    indent: 60,
-    endIndent: 20,
-    color: Color(0xFFEEEEEE),
-  );
+  Widget _buildDivider() => const Divider(height: 1, indent: 60, endIndent: 20);
 
   void _showComingSoon(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(

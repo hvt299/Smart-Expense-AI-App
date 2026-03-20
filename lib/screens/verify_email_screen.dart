@@ -101,9 +101,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
           'Xác thực Email',
@@ -151,6 +149,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                   height: 1.5,
                 ),
               ),
+              const SizedBox(height: 32),
 
               SizedBox(
                 height: 52,
