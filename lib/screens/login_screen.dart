@@ -215,7 +215,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       textInputAction: TextInputAction.next,
                       onChanged: (_) => setState(() => _nameError = null),
                       decoration: InputDecoration(
-                        labelText: 'Họ và tên',
+                        labelText: 'Họ và tên *',
                         prefixIcon: const Icon(Icons.person_outline, size: 22),
                         errorText: _nameError,
                       ),
@@ -230,7 +230,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     textInputAction: TextInputAction.next,
                     onChanged: (_) => setState(() => _emailError = null),
                     decoration: InputDecoration(
-                      labelText: 'Email',
+                      labelText: 'Email *',
                       prefixIcon: const Icon(Icons.email_outlined, size: 22),
                       errorText: _emailError,
                     ),
@@ -251,7 +251,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             context,
                           ).requestFocus(_confirmFocus),
                     decoration: InputDecoration(
-                      labelText: 'Mật khẩu',
+                      labelText: 'Mật khẩu *',
                       prefixIcon: const Icon(Icons.lock_outline, size: 22),
                       errorText: _passwordError,
                       suffixIcon: IconButton(
@@ -322,7 +322,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       onChanged: (_) => setState(() => _confirmError = null),
                       onSubmitted: (_) => _submit(),
                       decoration: InputDecoration(
-                        labelText: 'Nhập lại mật khẩu',
+                        labelText: 'Nhập lại mật khẩu *',
                         prefixIcon: const Icon(Icons.lock_reset, size: 22),
                         errorText: _confirmError,
                         suffixIcon: IconButton(

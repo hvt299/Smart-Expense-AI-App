@@ -139,7 +139,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     onChanged: (_) => setState(() => _emailError = null),
                     onSubmitted: (_) => _submit(),
                     decoration: InputDecoration(
-                      labelText: 'Email của bạn',
+                      labelText: 'Email của bạn *',
                       prefixIcon: const Icon(Icons.email_outlined, size: 22),
                       errorText: _emailError,
                     ),

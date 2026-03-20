@@ -403,7 +403,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                       : Colors.green.shade600,
                 ),
                 decoration: InputDecoration(
-                  labelText: 'Số tiền',
+                  labelText: 'Số tiền *',
                   suffixText: 'VNĐ',
                   suffixStyle: const TextStyle(
                     fontSize: 16,

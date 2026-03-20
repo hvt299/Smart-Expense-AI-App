@@ -32,14 +32,18 @@ class AuthService {
       if (user != null) {
         await user.updateDisplayName(fullName);
 
+        final defaultAvatar =
+            'https://ui-avatars.com/api/?name=${Uri.encodeComponent(fullName)}&background=random';
+        await user.updatePhotoURL(defaultAvatar);
+
         await user.sendEmailVerification();
 
         await _firestore.collection('users').doc(user.uid).set({
           'uid': user.uid,
           'email': email,
           'fullName': fullName,
-          'avatarUrl':
-              'https://ui-avatars.com/api/?name=${Uri.encodeComponent(fullName)}&background=random',
+          'avatarUrl': defaultAvatar,
+          'initialAvatarUrl': defaultAvatar,
           'createdAt': FieldValue.serverTimestamp(),
         });
       }
@@ -78,13 +82,16 @@ class AuthService {
             .get();
 
         if (!userDoc.exists) {
+          final googleAvatar =
+              user.photoURL ??
+              'https://ui-avatars.com/api/?name=${Uri.encodeComponent(user.displayName ?? "G")}&background=random';
+
           await _firestore.collection('users').doc(user.uid).set({
             'uid': user.uid,
             'email': user.email,
             'fullName': user.displayName ?? 'Người dùng Google',
-            'avatarUrl':
-                user.photoURL ??
-                'https://ui-avatars.com/api/?name=${Uri.encodeComponent(user.displayName ?? "G")}&background=random',
+            'avatarUrl': googleAvatar,
+            'initialAvatarUrl': googleAvatar,
             'createdAt': FieldValue.serverTimestamp(),
           });
         } else {
